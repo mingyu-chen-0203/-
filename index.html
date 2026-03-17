@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>資訊網路工程系排課系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="blob blob-a" aria-hidden="true"></div>
+    <div class="blob blob-b" aria-hidden="true"></div>
+
+    <section id="loginView" class="auth-shell">
+      <article class="auth-card">
+        <p class="eyebrow">Secure Access</p>
+        <h1>選擇登入身分</h1>
+        <p class="subtitle">請先選擇老師或學生，再輸入帳密登入。</p>
+
+        <div id="roleButtons" class="role-switch" aria-label="登入角色選擇">
+          <button type="button" class="role-btn active" data-role="teacher">老師登入</button>
+          <button type="button" class="role-btn" data-role="student">學生登入</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <input type="hidden" name="role" value="teacher" />
+          <label>
+            帳號
+            <input name="username" required maxlength="30" placeholder="請輸入帳號" />
+          </label>
+          <label>
+            密碼
+            <input
+              name="password"
+              required
+              type="password"
+              maxlength="40"
+              placeholder="請輸入密碼"
+            />
+          </label>
+          <div class="captcha-wrap">
+            <p class="captcha-text" id="captchaText" aria-live="polite"></p>
+            <button type="button" class="btn btn-ghost captcha-refresh" id="captchaRefreshBtn">
+              重新產生
+            </button>
+          </div>
+          <label>
+            驗證碼
+            <input
+              name="captchaInput"
+              required
+              maxlength="6"
+              placeholder="請輸入上方驗證碼"
+              autocomplete="off"
+            />
+          </label>
+          <button type="submit" class="btn btn-primary">登入</button>
+        </form>
+
+        <details class="auth-hint">
+          <summary>查看所有帳號</summary>
+          <div class="hint-body">
+            <p class="hint-group-title">&#128100; 老師帳號</p>
+            <table class="hint-table">
+              <thead><tr><th>帳號</th><th>密碼</th><th>姓名</th></tr></thead>
+              <tbody>
+                <tr><td>T001</td><td>Wang@2025</td><td>王大明</td></tr>
+                <tr><td>T002</td><td>Lee@2025</td><td>李雅婷</td></tr>
+                <tr><td>T003</td><td>Chen@2025</td><td>陳志豪</td></tr>
+                <tr><td>T004</td><td>Lin@2025</td><td>林淑芬</td></tr>
+                <tr><td>T005</td><td>Huang@2025</td><td>黃建國</td></tr>
+              </tbody>
+            </table>
+            <p class="hint-group-title" style="margin-top:10px">&#127891; 學生帳號</p>
+            <table class="hint-table">
+              <thead><tr><th>帳號</th><th>密碼</th><th>姓名</th></tr></thead>
+              <tbody>
+                <tr><td>D1124182001</td><td>Stu@001</td><td>張小明</td></tr>
+                <tr><td>D1124182002</td><td>Stu@002</td><td>林美華</td></tr>
+                <tr><td>D1124182003</td><td>Stu@003</td><td>陳俊傑</td></tr>
+                <tr><td>D1124182004</td><td>Stu@004</td><td>王雅琪</td></tr>
+                <tr><td>D1124182005</td><td>Stu@005</td><td>李志遠</td></tr>
+                <tr><td>D1124182006</td><td>Stu@006</td><td>黃淑娟</td></tr>
+                <tr><td>D1124182007</td><td>Stu@007</td><td>吳建宏</td></tr>
+                <tr><td>D1124182008</td><td>Q224620840</td><td>陳明玉</td></tr>
+                <tr><td>D1124182009</td><td>Stu@009</td><td>蔡明哲</td></tr>
+                <tr><td>D1124182010</td><td>Stu@010</td><td>鄭佳玲</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </article>
+    </section>
+
+    <main class="app-shell" id="appShell" hidden>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Department Scheduler</p>
+          <h1>資訊網路工程系排課系統</h1>
+          <p class="subtitle">
+            管理課程、即時檢查衝堂、快速查看每週課表。
+          </p>
+          <p class="subtitle" id="userBadge"></p>
+        </div>
+        <div class="hero-actions">
+          <button id="logoutBtn" class="btn btn-ghost">登出</button>
+          <button id="seedBtn" class="btn btn-ghost">載入範例課程</button>
+          <button id="clearBtn" class="btn btn-danger">清空所有資料</button>
+        </div>
+      </header>
+
+      <section class="teacher-portal" id="teacherPortal" hidden>
+        <aside class="teacher-sidebar">
+          <h2>教師後台</h2>
+          <nav class="tree-nav" id="teacherPhaseNav">
+            <button type="button" class="tree-item active" data-phase="fill">課務管理 / 填報階段</button>
+            <button type="button" class="tree-item" data-phase="manage">課務管理 / 課綱管理</button>
+            <button type="button" class="tree-item" data-phase="monitor">課務管理 / 選課監控</button>
+            <button type="button" class="tree-item" disabled>成績管理 / 尚未開放</button>
+            <button type="button" class="tree-item" disabled>導師職務 / 尚未開放</button>
+            <button type="button" class="tree-item" disabled>計畫申請 / 尚未開放</button>
+          </nav>
+        </aside>
+
+        <section class="teacher-main">
+          <p class="warning-text" id="teacherWarnText">請於 3/20 前完成本學期填報，違反排課上限會阻擋存檔。</p>
+
+          <article class="panel phase-panel" id="phaseFill">
+            <h2>1. 填報階段：教學意願與擋排設定</h2>
+            <form id="willingForm" class="teacher-form excel-form">
+              <label>
+                課程名稱
+                <input name="courseName" required maxlength="40" placeholder="例如 網路安全" />
+              </label>
+              <label>
+                課程代碼
+                <input name="courseCode" required maxlength="20" placeholder="例如 INE333" />
+              </label>
+              <label>
+                教室特殊需求
+                <select name="roomNeed">
+                  <option value="none">一般教室</option>
+                  <option value="tiered">階梯教室</option>
+                  <option value="computer">電腦教室</option>
+                  <option value="microphone">需要麥克風</option>
+                </select>
+              </label>
+              <label>
+                合授老師 B
+                <input name="coTeacher" maxlength="30" placeholder="沒有可留白" />
+              </label>
+              <label>
+                老師 A 分擔比例（%）
+                <input name="ratioA" type="number" min="0" max="100" value="100" />
+              </label>
+              <label>
+                老師 B 分擔比例（%）
+                <input name="ratioB" type="number" min="0" max="100" value="0" />
+              </label>
+              <p class="full-width">不排課時間（點選格子可切換擋排）</p>
+              <div id="blockGrid" class="block-grid full-width"></div>
+              <p class="sheet-note full-width" id="fillStageStatus"></p>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存填報資料</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel phase-panel" id="phaseManage" hidden>
+            <h2>2. 管理階段：課程大綱編輯器</h2>
+            <form id="syllabusForm" class="teacher-form excel-form">
+              <div class="full-width table-wrap">
+                <table class="excel-table">
+                  <thead>
+                    <tr>
+                      <th>週次</th>
+                      <th>教學主題</th>
+                    </tr>
+                  </thead>
+                  <tbody id="syllabusWeekBody"></tbody>
+                </table>
+              </div>
+
+              <fieldset class="full-width capability-box">
+                <legend>核心能力關聯</legend>
+                <label class="check-field"><input type="checkbox" name="capability" value="溝通能力" />溝通能力</label>
+                <label class="check-field"><input type="checkbox" name="capability" value="分析能力" />分析能力</label>
+                <label class="check-field"><input type="checkbox" name="capability" value="團隊協作" />團隊協作</label>
+                <label class="check-field"><input type="checkbox" name="capability" value="問題解決" />問題解決</label>
+                <label class="check-field"><input type="checkbox" name="capability" value="程式實作" />程式實作</label>
+              </fieldset>
+
+              <label>
+                Final（%）
+                <input name="finalRatio" type="number" min="0" max="100" value="40" />
+              </label>
+              <label>
+                Midterm（%）
+                <input name="midtermRatio" type="number" min="0" max="100" value="30" />
+              </label>
+              <label>
+                Attendance（%）
+                <input name="attendanceRatio" type="number" min="0" max="100" value="30" />
+              </label>
+              <p class="full-width formula-box" id="gradeFormulaText">Final = 40% + Midterm = 30% + Attendance = 30%</p>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存課綱</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel phase-panel" id="phaseMonitor" hidden>
+            <h2>3. 開課後：選課與名單監控</h2>
+            <div class="teacher-form excel-form">
+              <div class="monitor-top">
+                <label>
+                  已選人數
+                  <input id="selectedCountInput" type="number" min="0" value="52" />
+                </label>
+                <label>
+                  課容量
+                  <input id="capacityInput" type="number" min="1" value="60" />
+                </label>
+                <p class="formula-box" id="quotaText">已選人數 / 課容量：52 / 60</p>
+              </div>
+
+              <div class="table-wrap">
+                <table class="excel-table">
+                  <thead>
+                    <tr>
+                      <th>大頭照</th>
+                      <th>學號</th>
+                      <th>姓名</th>
+                      <th>系級</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentListBody"></tbody>
+                </table>
+              </div>
+
+              <div class="auth-code-row">
+                <button type="button" class="btn btn-primary" id="generateAuthCodeBtn">產生授權碼</button>
+                <p id="authCodeText" class="formula-box">尚未產生授權碼</p>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section class="student-portal" id="studentPortal" hidden>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>戰情儀表板</h2>
+            <p id="studentNoticeText" class="warning-text">請注意：第一階段選課將於 3/20 10:00:00 開始。</p>
+          </div>
+          <div class="dashboard-grid">
+            <article class="dash-card">
+              <p class="label">第一階段倒數</p>
+              <p class="value" id="phase1Countdown">--:--:--</p>
+            </article>
+            <article class="dash-card">
+              <p class="label">第二階段倒數</p>
+              <p class="value" id="phase2Countdown">--:--:--</p>
+            </article>
+            <article class="dash-card">
+              <p class="label">加退選倒數</p>
+              <p class="value" id="addDropCountdown">--:--:--</p>
+            </article>
+            <article class="dash-card">
+              <p class="label">中籤率/餘額</p>
+              <p class="value" id="lotteryRate">0 / 0</p>
+            </article>
+          </div>
+          <div class="credit-progress-wrap">
+            <p id="creditProgressText">學分進度：0 / 25</p>
+            <div class="credit-track">
+              <div id="creditBar" class="credit-bar"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>課程搜尋與篩選器</h2>
+          <div class="student-filter-grid">
+            <label>
+              關鍵字
+              <input id="studentKeyword" placeholder="輸入課名或老師" />
+            </label>
+            <label>
+              類別
+              <select id="studentCategory">
+                <option value="all">全部</option>
+                <option value="通識-人文">通識（人文）</option>
+                <option value="通識-自然">通識（自然）</option>
+                <option value="通識-社會">通識（社會）</option>
+                <option value="體育">體育</option>
+                <option value="專業">專業</option>
+              </select>
+            </label>
+            <label>
+              特定時段
+              <select id="studentSlot">
+                <option value="all">全部</option>
+                <option value="Wed-5">週三下午（第5節）</option>
+                <option value="Wed-6">週三下午（第6節）</option>
+                <option value="Fri-7">週五下午（第7節）</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>課程</th>
+                  <th>教師</th>
+                  <th>類別</th>
+                  <th>時間</th>
+                  <th>餘額</th>
+                  <th>評價/大綱</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="studentSearchBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>購物車與志願序</h2>
+          <p id="studentCartWarn" class="warning-text"></p>
+          <div class="table-wrap">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>志願序</th>
+                  <th>課程</th>
+                  <th>時間</th>
+                  <th>學分</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="studentCartBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>即時模擬課表（5 x 10）</h2>
+          <div id="studentTimetable" class="student-timetable"></div>
+        </section>
+      </section>
+
+      <div id="schedulerSections">
+        <section class="stats" id="stats"></section>
+
+        <section class="panel">
+        <h2>課程編輯</h2>
+        <form id="courseForm" class="form-grid">
+          <label>
+            課程代碼
+            <input name="code" required maxlength="20" placeholder="例如 INE301" />
+          </label>
+          <label>
+            課程名稱
+            <input name="name" required maxlength="40" placeholder="例如 網路安全" />
+          </label>
+          <label>
+            授課教師
+            <input name="teacher" required maxlength="30" placeholder="例如 王老師" />
+          </label>
+          <label>
+            學分
+            <input name="credits" required type="number" min="1" max="6" value="3" />
+          </label>
+          <label>
+            課程類型
+            <select name="type" required>
+              <option value="required">必修</option>
+              <option value="elective">選修</option>
+            </select>
+          </label>
+          <label>
+            星期
+            <select name="day" required>
+              <option value="Mon">一</option>
+              <option value="Tue">二</option>
+              <option value="Wed">三</option>
+              <option value="Thu">四</option>
+              <option value="Fri">五</option>
+            </select>
+          </label>
+          <label>
+            開始時間
+            <input name="start" required type="time" value="09:00" />
+          </label>
+          <label>
+            結束時間
+            <input name="end" required type="time" value="12:00" />
+          </label>
+          <label>
+            教室
+            <input name="room" required maxlength="20" placeholder="例如 E402" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitBtn">新增課程</button>
+            <button type="button" class="btn btn-ghost" id="resetBtn">清除表單</button>
+            <button type="button" class="btn btn-ghost" id="exportBtn">匯出 JSON</button>
+            <label class="btn btn-ghost file-like">
+              匯入 JSON
+              <input id="importInput" type="file" accept="application/json" hidden />
+            </label>
+          </div>
+        </form>
+        </section>
+
+        <section class="panel">
+        <div class="panel-head">
+          <h2>課程清單</h2>
+          <p id="hintText">點擊「編輯」可回填到上方表單。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>代碼</th>
+                <th>名稱</th>
+                <th>教師</th>
+                <th>學分</th>
+                <th>類型</th>
+                <th>時間</th>
+                <th>教室</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="courseTableBody"></tbody>
+          </table>
+        </div>
+        </section>
+
+        <section class="panel">
+        <h2>每週課表</h2>
+        <div id="timetable" class="timetable"></div>
+        </section>
+      </div>
+    </main>
+
+    <template id="statTemplate">
+      <article class="stat-card">
+        <p class="label"></p>
+        <p class="value"></p>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
